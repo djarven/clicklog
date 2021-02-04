@@ -1,0 +1,7 @@
+{
+  "name": "clicklog",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}

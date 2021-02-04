@@ -1,0 +1,3 @@
+export const TOKEN_STORE = "TOKEN_STORE"
+export const TOKEN_REMOVE = "TOKEN_REMOVE"
+export const TOKEN_CHECKED = "TOKEN_CHECKED"
