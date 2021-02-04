@@ -2,21 +2,10 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonModal, Io
 import React from 'react';
 import Api from "../services/Api";
 import {dayOfWeek, formatMonthYear, formatYYYYMMDD, getWeekFromDate} from "../helpers/dateFunctions";
-import {daysLong, daysShort} from "../helpers/dateStructs";
-
-interface LogInterface {
-  id: number
-  project: string
-  description: string
-  date: string
-  hours: number
-}
-interface DayInterface {
-  name: string
-  date: string
-  dateShort: string
-  logs: Array<LogInterface>
-}
+import {daysShort} from "../helpers/dateStructs";
+import {LogInterface} from "../interfaces/LogInterface";
+import {DayInterface} from "../interfaces/DayInterface";
+import EditLog from "../components/EditLog";
 
 interface ComponentProps {}
 
@@ -26,12 +15,14 @@ interface ComponentState {
   week: number
   monthYear: string
   weekDays: Array<DayInterface>
+  day: DayInterface
+  log: LogInterface
 }
 
 class Home extends React.Component<ComponentProps, ComponentState> {
 
   api = Api.getInstance()
-  today = new Date()
+  monday = new Date()
   date: Date
 
   state = {
@@ -39,7 +30,9 @@ class Home extends React.Component<ComponentProps, ComponentState> {
     week: 0,
     monthYear: '',
     monday: new Date(),
-    weekDays: []
+    weekDays: [],
+    day: {} as DayInterface,
+    log: {} as LogInterface
   }
 
   constructor(props: ComponentProps) {
@@ -52,10 +45,10 @@ class Home extends React.Component<ComponentProps, ComponentState> {
   }
 
   setWeek = () => {
-    let monday = new Date(this.date)
+    this.monday = new Date(this.date)
     let dow = dayOfWeek(this.date)
-    monday.setDate(this.date.getDate() - dow)
-    let day = monday
+    this.monday.setDate(this.date.getDate() - dow)
+    let day = new Date(this.monday)
     const days = [] as Array<DayInterface>
     for (let i = 0; i < 7; i++) {
       days.push({
@@ -67,17 +60,17 @@ class Home extends React.Component<ComponentProps, ComponentState> {
       day.setDate(day.getDate() + 1)
     }
     this.setState({
-      monday: monday,
-      week: getWeekFromDate(monday),
-      monthYear: formatMonthYear(monday),
+      monday: this.monday,
+      week: getWeekFromDate(this.monday),
+      monthYear: formatMonthYear(this.monday),
       weekDays: days
     })
     this.getData()
   }
 
   getData = () => {
-    const firstDate = formatYYYYMMDD(this.state.monday)
-    let endDate = new Date(this.state.monday)
+    const firstDate = formatYYYYMMDD(this.monday)
+    let endDate = new Date(this.monday)
     endDate.setDate(endDate.getDate() + 7)
     const lastDate = formatYYYYMMDD(endDate)
     const url = 'work_logs?first_date=' + firstDate + '&last_date=' + lastDate;
@@ -109,6 +102,17 @@ class Home extends React.Component<ComponentProps, ComponentState> {
     this.setWeek()
   }
 
+  editLog = (day: DayInterface, log: LogInterface) => {
+    this.setState({day: day, editDay: true, log: log})
+  }
+
+  saveLog = (changed: boolean) => {
+    this.setState({editDay: false})
+    if (changed) {
+      this.getData()
+    }
+  }
+
   render() {
     return (
       <IonPage>
@@ -123,10 +127,7 @@ class Home extends React.Component<ComponentProps, ComponentState> {
 
         <IonContent>
           <IonModal isOpen={this.state.editDay} cssClass="modal_centered" onDidDismiss={() => this.setState({editDay: false})}>
-            <div className="p-4">
-              <h3 className="text_center">Ändra grejer</h3>
-              <p className="mt-4 font_small text_link">Kopiera senaste: "Dricka öl"</p>
-            </div>
+            <EditLog day={this.state.day} log={this.state.log} save={this.saveLog}/>
           </IonModal>
           <div className="mt-4 flex ion-justify-content-around">
             <div onClick={() => this.addMonth(-1)}>
@@ -162,11 +163,12 @@ class Home extends React.Component<ComponentProps, ComponentState> {
                     <h3>{day.name}</h3>
                     <p className="mt-2 font_small">{day.dateShort}</p>
                   </div>
-                  <div className="font_small">
+                  <div className="font_small flex-grow mx-4">
                     {
                       day.logs.map((log: LogInterface, logIndex) => {
                         return (
-                          <div key={"p_" + index + "_" + logIndex} className="mb-2">
+                          <div key={"p_" + index + "_" + logIndex} className="mb-2"
+                               onClick={() => this.editLog(day, log)}>
                             {log.project}: {log.hours} h
                             <p><i>{log.description}</i></p>
                           </div>
@@ -174,7 +176,7 @@ class Home extends React.Component<ComponentProps, ComponentState> {
                       })
                     }
                   </div>
-                  <div onClick={() => this.setState({editDay: true})}>
+                  <div onClick={() => this.editLog(day, {} as LogInterface)}>
                     <img alt="plus" src="/assets/icon/plus.svg" className="arrow"/>
                   </div>
                 </div>
