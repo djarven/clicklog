@@ -81,8 +81,10 @@ class Home extends React.Component<ComponentProps, ComponentState> {
 
   addLogs = (logs: Array<LogInterface>) => {
     const weekDays = this.state.weekDays
-    for (let log of logs) {
-      for (let weekDay of weekDays as Array<DayInterface>) {
+
+    for (let weekDay of weekDays as Array<DayInterface>) {
+      weekDay.logs = []
+      for (let log of logs) {
         if (weekDay.date === log.date) {
           weekDay.logs.push(log)
           break
@@ -157,7 +159,7 @@ class Home extends React.Component<ComponentProps, ComponentState> {
             this.state.weekDays.map((day: DayInterface, index: number) => {
               const dayClass = index > 4 ? 'day_weekend' : ''
               return (
-                <div key={"day_" + index} style={{borderBottom: "2px solid #4444"}}
+                <div key={"day_" + index} style={{borderBottom: "2px solid #444"}}
                      className={"px-4 py-2 flex justify-between " + dayClass}>
                   <div>
                     <h3>{day.name}</h3>
